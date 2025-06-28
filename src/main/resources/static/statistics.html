@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数据统计 - 图书借阅系统</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- 引入Bootstrap CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <!-- 引入ECharts -->
+    <script src="/js/echarts.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding-top: 70px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            width: 90%;
+            height: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1>图书借阅数据统计</h1>
+            <p class="text-muted">展示每日图书借阅数量的可视化分析</p>
+        </header>
+
+        <div class="row mt-5">
+            <div class="col-md-6 mb-4">
+                <h3 class="text-center">折线图展示</h3>
+                <div id="borrowLineChart" class="chart-container"></div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <h3 class="text-center">柱状图展示</h3>
+                <div id="borrowBarChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Bootstrap JS Bundle -->
+    <script src="/js/bootstrap.bundle.js"></script>
+    <script>
+        // 初始化图表
+        const lineChartDom = document.getElementById('borrowLineChart');
+        const barChartDom = document.getElementById('borrowBarChart');
+        const myLineChart = echarts.init(lineChartDom);
+        const myBarChart = echarts.init(barChartDom);
+
+        // 获取数据的函数
+        async function fetchBorrowData() {
+            try {
+                const response = await fetch('/api/borrow/stats');
+                if (!response.ok) {
+                    throw new Error(`HTTP错误! 状态码: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('获取借阅数据失败:', error);
+                // 返回示例数据作为后备
+                return {
+                    dates: ['2023-09-01', '2023-09-02', '2023-09-03', '2023-09-04', '2023-09-05'],
+                    counts: [12, 15, 9, 18, 10]
+                };
+            }
+        }
+
+        // 渲染图表
+        async function renderCharts() {
+            const data = await fetchBorrowData();
+
+            // 折线图配置
+            const lineOption = {
+                title: {
+                    text: '每日借阅量趋势（折线图）',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}<br/>借阅量: {c} 本'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.dates,
+                    name: '日期'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '借阅数量'
+                },
+                series: [{
+                    name: '借阅量',
+                    type: 'line',
+                    data: data.counts,
+                    smooth: true,
+                    itemStyle: { color: '#4e79a7' },
+                    lineStyle: { color: '#4e79a7' }
+                }],
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    bottom: '15%',
+                    top: '20%'
+                },
+                dataZoom: [{
+                    type: 'slider',
+                    start: 0,
+                    end: 100
+                }]
+            };
+
+            // 柱状图配置
+            const barOption = {
+                title: {
+                    text: '每日借阅量分布（柱状图）',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: '{b}<br/>借阅量: {c} 本'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.dates,
+                    name: '日期',
+                    axisLabel: {
+                        rotate: 45
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '借阅数量'
+                },
+                series: [{
+                    name: '借阅量',
+                    type: 'bar',
+                    data: data.counts,
+                    itemStyle: { color: '#f28e2b' },
+                    emphasis: {
+                        itemStyle: { color: '#d76300' }
+                    }
+                }],
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    bottom: '20%',
+                    top: '20%'
+                },
+                dataZoom: [{
+                    type: 'slider',
+                    start: 0,
+                    end: 100
+                }]
+            };
+
+            // 渲染图表
+            myLineChart.setOption(lineOption);
+            myBarChart.setOption(barOption);
+        }
+
+        // 初始渲染
+        renderCharts();
+
+        // 页面大小变化时自适应
+        window.addEventListener('resize', () => {
+            myLineChart.resize();
+            myBarChart.resize();
+        });
+    </script>
+</body>
+</html>

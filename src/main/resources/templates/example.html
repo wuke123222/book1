@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-cn" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${book != null ? book.title + ' - 图书详情' : '图书详情'}">图书详情</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* 保持现有样式不变 */
+        .book-card {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .book-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        .book-info {
+            font-size: 1.1rem;
+            color: #444;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ddd;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-transition {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .book-card {
+                margin: 1rem;
+                padding: 1rem;
+            }
+        }
+    </style>
+    <style>
+        .rating-system .star {
+            font-size: 2.2rem;
+            cursor: pointer;
+            color: #ccc;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .rating-system .star::before {
+            content: '★';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            color: #ffc107;
+            overflow: hidden;
+            white-space: nowrap;
+            transform-origin: left center;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .rating-system .star.active::before,
+        .rating-system .star:hover::before {
+            transform: scaleX(1);
+        }
+
+        .rating-system .star:hover {
+            transform: scale(1.1);
+        }
+
+        .comment-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            animation: fadeInUp 0.4s ease-out;
+            position: relative;
+            border-left: 5px solid #6366f1;
+            transition: transform 0.3s ease;
+        }
+
+        .comment-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #1a73e8;
+            font-size: 1.1rem;
+        }
+
+        .comment-date {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: -0.3rem;
+        }
+
+        .reply-btn {
+            font-size: 0.85rem;
+            padding: 0.25rem 0.6rem;
+            margin-left: 1rem;
+            background: linear-gradient(45deg, #0052a3, #0077be);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .reply-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 119, 190, 0.3);
+        }
+
+        .replies .border-left {
+            border-color: #6366f1 !important;
+        }
+
+        .small-text {
+            font-size: 0.9rem;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .page-link {
+            cursor: pointer;
+            color:forestgreen;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+        background-color：rgba(1,33, 10, 0.1);
+        }
+
+        .page-item.active .page-link {
+            background-color: #0077be;
+            color:orangered;
+            border-color: #0077be;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .rating-system {
+                gap: 0.3rem;
+            }
+
+            .rating-system .star {
+                font-size: 1.8rem;
+            }
+
+            .comment-card {
+                padding: 0.8rem;
+            }
+
+            .comment-author {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="book-card" th:if="${book != null}">
+    <h2 class="text-center mb-4" th:text="${book.title}">书籍标题</h2>
+
+    <div class="book-info mb-3">
+        <strong>作者：</strong> <span th:text="${book.author ?: '暂无信息'}"></span>
+    </div>
+
+    <div class="book-info mb-3">
+        <strong>ISBN：</strong> <span th:text="${book.isbn ?: '暂无信息'}"></span>
+    </div>
+
+    <div class="book-info mb-3">
+        <strong>出版日期：</strong> 
+        <span th:text="${book.publishedDate != null ? #dates.format(book.publishedDate, 'yyyy-MM-dd') : '暂无信息'}"></span>
+    </div>
+
+    <div class="book-info mb-3">
+        <strong>库存数量：</strong> <span th:text="${book.num ?: 0}"></span>
+    </div>
+
+    <div class="book-info mb-3">
+        <strong>简介：</strong>
+        <div class="mt-2">
+            <p id="description" class="fade-transition" style="min-height: 60px;"
+               th:text="${book.title ?: '暂无简介信息'}">
+                正在加载简介...
+                <span class="loading-spinner"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="book-info mb-3">
+        <strong>发行信息：</strong>
+        <p class="mt-2" id="publication-info" th:text="${book.publishedDate ?: '暂无发行信息'}">
+            出版社、版次等发行信息
+        </p>
+    </div>
+
+    <div class="book-info mb-3">
+        <strong>可用状态：</strong>
+        <span th:classappend="${book.available ? 'status-badge available' : 'status-badge unavailable'}"
+              th:text="${book.available ? '可借阅' : '不可借阅'}">状态</span>
+    </div>
+
+    <div class="mt-4">
+        <a class="btn btn-primary" th:href="@{/}" role="button">返回列表</a>
+    </div>
+</div>
+</body>
+</html>

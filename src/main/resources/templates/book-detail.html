@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-cn" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${book != null ? book.title + ' - 图书详情' : '图书详情'}">图书详情</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        body {
+            margin: 0;
+            padding-top: 70px;
+            background: url('/icons/img_1.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+
+        .book-card {
+            max-width: 700px;
+            margin-left: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .book-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .book-info {
+            font-size: 1.15rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.2rem;
+            background: linear-gradient(90deg, #f8f9fa, #ffffff);
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .book-info:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.15);
+            border-left-color: #2980b9;
+        }
+
+        .book-info strong {
+            min-width: 80px;
+            color: #2c3e50;
+            font-weight: 600;
+            display: inline-block;
+            text-align: right;
+            margin-right: 1rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ddd;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-transition {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .book-card {
+                margin: 1rem;
+                padding: 1rem;
+            }
+        }
+    </style>
+    <style>
+        /* 保持新增样式不变 */
+        .rating-system {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hover-animate {
+            transition: all 0.3s ease;
+        }
+
+        .hover-animate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 77, 77, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="book-card">
+        <h2 class="text-center mb-4" th:text="${book != null ? book.title : '图书详情'}">书籍标题</h2>
+        
+        <div class="book-info mb-3">
+            <strong>作者：</strong> <span th:text="${book.author}">作者姓名</span>
+        </div>
+        
+        <div class="book-info mb-3">
+            <strong>ISBN：</strong> <span th:text="${book.isbn}">ISBN编号</span>
+        </div>
+        
+        <div class="book-info mb-3">
+            <strong>出版日期：</strong> <span th:text="${book.publishedDate != null ? #dates.format(book.publishedDate, 'yyyy-MM-dd') : '暂无信息'}">出版日期</span>
+        </div>
+        
+        <div class="book-info mb-3">
+            <strong>库存数量：</strong> <span th:text="${book.num}">库存数量</span>
+        </div>
+        
+        <div class="book-info mb-3">
+            <strong>简介：</strong>
+            <div class="mt-2">
+                <p id="description" class="fade-transition" style="min-height: 60px;">
+                    正在加载简介...
+                    <span class="loading-spinner"></span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="book-info mb-3">
+            <strong>发行信息：</strong>
+            <p class="mt-2" id="publication-info">出版社、版次等发行信息</p>
+        </div>
+        
+        <div class="book-info mb-3">
+            <strong>可用状态：</strong>
+            <span th:classappend="${book.available ? 'status-badge available' : 'status-badge unavailable'}"
+                  th:text="${book.available ? '可借阅' : '不可借阅'}">状态</span>
+        </div>
+
+        <div class="mt-4">
+            <a class="btn btn-primary" th:href="@{/}" role="button">返回列表</a>
+        </div>
+    </div>
+
+    <!-- 新增的评论功能 -->
+    <div class="comment-section">
+        <h3 class="mb-4">用户评价</h3>
+        
+        <!-- 评分组件 -->
+        <div class="rating-system mb-4">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+            <input type="hidden" id="ratingValue">
+            <p class="text-muted mt-2">点击星星进行评分</p>
+        </div>
+
+        <!-- 评论表单 -->
+        <form id="commentForm" class="mb-4">
+            <div class="form-group">
+                <textarea id="commentText" class="form-control" rows="3" placeholder="写下你的评论..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">提交评论</button>
+        </form>
+
+        <!-- 评论列表 -->
+        <div id="commentList">
+            <!-- 动态加载评论 -->
+        </div>
+
+        <!-- 分页导航 -->
+        <nav aria-label="评论分页" class="mt-4 pagination-container">
+            <ul class="pagination justify-content-center" id="pagination">
+                <!-- 分页按钮动态生成 -->
+                <!-- 清空评论按钮 -->
+                <button type="button" 
+                        class="btn btn-danger mt-2 ml-3 shadow-sm hover-animate"
+                        id="clearComments"
+                        style="background: linear-gradient(45deg, #ff4d4d, #cc0000); border-radius: 30px; padding: 0.4rem 1rem; font-weight: 500;"
+                        onclick="clearComments()">
+                    <i class="fas fa-trash-alt mr-1"></i> 清空评论
+                </button>
+            </ul>
+        </nav>
+            <script>
+                function clearComments() {
+                    if (confirm('确定要清空所有评论吗？')) {
+                        // 清除本地存储的评论数据
+                        localStorage.removeItem('bookComments');
+                        
+                        // 清空评论列表DOM
+                        const commentList = document.getElementById('commentList');
+                        commentList.innerHTML = '<p class="text-muted">暂无评论</p>';
+                        
+                        // 重置分页状态
+                        currentPage = 1;
+                        allComments = [];
+                        
+                        // 更新分页控件
+                        const totalPages = Math.ceil(allComments.length / commentsPerPage);
+                        renderPagination(totalPages);
+                    }
+                }
+            </script>
+        </nav>
+    </div>
+
+  
+
+</body>
+<script>
+    // 页面加载完成后获取图书详细信息
+    document.addEventListener('DOMContentLoaded', function() {
+            fetch(`https://data.isbn.work/openApi/getInfoByIsbn?isbn=9787513159074&appKey=585228f8b80b44d483788c15838ec982`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 解析API返回的数据
+                    if (data.code !== 0) {
+                        throw new Error('未找到相关书籍信息');
+                    }
+                    
+                    const bookInfo = data.data;
+                    
+                    // 更新简介内容
+                    const descriptionElement = document.getElementById('description');
+                    descriptionElement.innerHTML = bookInfo.bookDesc || '暂无简介信息';
+                    
+                    // 更新其他图书信息
+                    document.querySelector('.book-info strong:nth-child(1)').textContent = bookInfo.author || '未知作者';
+                    document.querySelector('.book-info strong:nth-child(2)').textContent = bookInfo.isbn;
+                    
+                    // 处理出版日期（仅保留年份）
+                    let publishedYear = '暂无信息';
+                    if (bookInfo.pressDate) {
+                        publishedYear = bookInfo.pressDate.split('.')[0];
+                    }
+                    document.querySelector('.book-info strong:nth-child(3)').textContent = publishedYear;
+                    
+                    // 库存数量处理
+                    document.querySelector('.book-info strong:nth-child(4)').textContent = bookInfo.num || 'N/A';
+                    
+                    // 所有书籍默认为可借阅
+                    const statusBadge = document.querySelector('.status-badge');
+                    statusBadge.classList.remove('unavailable');
+                    statusBadge.classList.add('available');
+                    statusBadge.textContent = '可借阅';
+                })
+                .catch(error => {
+                    console.error('Error fetching book details:', error);
+                    document.getElementById('description').innerHTML = `简介加载失败: ${error.message}`;
+                });
+    });
+</script>
+<script>
+    // 评分功能
+    const stars = document.querySelectorAll('.rating-system .star');
+    let selectedRating = 0;
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            selectedRating = parseInt(star.getAttribute('data-value'));
+            updateStars();
+            document.getElementById('ratingValue').value = selectedRating;
+            // 模拟提交评分（需要替换为实际API调用）
+            console.log(`评分已提交: ${selectedRating}`);
+        });
+
+        star.addEventListener('mouseover', () => {
+            resetStars();
+            highlightStars(parseInt(star.getAttribute('data-value')));
+        });
+
+        star.addEventListener('mouseout', () => {
+            resetStars();
+            if (selectedRating > 0) {
+                highlightStars(selectedRating);
+            }
+        });
+    });
+
+    // 评论分页功能
+    let currentPage = 1;
+    const commentsPerPage = 5;
+    let allComments = [];
+    const totalComments = 25;
+    
+    // 页面加载完成后初始化评论系统
+    window.addEventListener('DOMContentLoaded', () => {
+        // 从localStorage加载保存的评论
+        const savedComments = localStorage.getItem('bookComments');
+        if (savedComments) {
+            allComments = JSON.parse(savedComments);
+        }
+        
+        addStarHoverAnimation();
+        initFormValidation();
+        renderPagination(totalPages);
+        
+        // 添加清空评论按钮事件监听
+        document.getElementById('clearComments').addEventListener('click', () => {
+            if (confirm('确定要清空所有评论吗？')) {
+                // 直接清除本地存储
+                localStorage.removeItem('bookComments');
+                
+                // 立即刷新页面显示
+                location.reload();
+            }
+        });
+    });
+    
+    // 提交评论事件
+    document.getElementById('commentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const commentText = document.getElementById('commentText').value.trim();
+        const rating = document.getElementById('ratingValue').value;
+        
+        if (!commentText && !rating) {
+            alert('请填写评论内容或选择评分');
+            return;
+        }
+        
+        // 模拟添加新评论（需要替换为实际API调用）
+        const newComment = {
+            id: Date.now(),
+            author: '当前用户',
+            content: commentText || '未填写评论内容',
+            date: new Date().toISOString().split('T')[0],
+            rating:rating, // 添加评分字段
+            replies: [],
+            valuate:""
+        };
+        
+        // 添加到评论列表顶部
+        allComments.unshift(newComment);
+        // 保存到localStorage
+        localStorage.setItem('bookComments', JSON.stringify(allComments));
+        
+        // 重新计算总页数
+        const totalPages = Math.ceil(allComments.length / commentsPerPage);
+        renderComments(currentPage);
+        renderPagination(totalPages);
+        
+        // 清空输入框和评分
+        document.getElementById('commentText').value = '';
+        selectedRating = 0;
+        resetStars();
+        document.getElementById('ratingValue').value = '';
+    });
+
+    function updateStars() {
+        resetStars();
+        for (let i = 0; i < selectedRating; i++) {
+            stars[i].classList.add('active');
+        }
+    }
+
+    function resetStars() {
+        stars.forEach(s => s.classList.remove('active'));
+    }
+
+    function highlightStars(rating) {
+        for (let i = 0; i < rating; i++) {
+            stars[i].classList.add('active');
+        }
+    }
+
+    // 添加评分悬停动画
+    function addStarHoverAnimation() {
+        const stars = document.querySelectorAll('.rating-system .star');
+        stars.forEach(star => {
+            star.addEventListener('mouseenter', () => {
+                const value = parseInt(star.getAttribute('data-value'));
+                highlightStars(value);
+
+                // 创建浮动效果元素
+                const tooltip = document.createElement('div');
+                tooltip.className = 'star-tooltip';
+                tooltip.textContent = getRatingText(value);
+                tooltip.style.position = 'absolute';
+                tooltip.style.bottom = '120%';
+                tooltip.style.left = '50%';
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.style.backgroundColor = '#333';
+                tooltip.style.color = '#fff';
+                tooltip.style.padding = '4px 8px';
+                tooltip.style.borderRadius = '4px';
+                tooltip.style.whiteSpace = 'nowrap';
+                tooltip.style.fontSize = '12px';
+                tooltip.style.zIndex = '1000';
+                tooltip.style.opacity = '0';
+                tooltip.style.transition = 'opacity 0.3s';
+
+                star.appendChild(tooltip);
+
+                // 显示tooltip
+                setTimeout(() => {
+                    tooltip.style.opacity = '1';
+                }, 50);
+
+                // 移除tooltip
+                setTimeout(() => {
+                    tooltip.style.opacity = '0';
+                    setTimeout(() => {
+                        tooltip.remove();
+                    }, 300);
+                }, 1500);
+            });
+        });
+    }
+
+    // 获取评分文字描述
+    function getRatingText(rating) {
+        switch(rating) {
+            case 1: return '非常差';
+            case 2: return '较差';
+            case 3: return '一般';
+            case 4: return '较好';
+            case 5: return '非常好';
+            default: return '';
+        }
+    }
+
+    // 表单验证功能
+    function initFormValidation() {
+        const commentForm = document.getElementById('commentForm');
+        const commentText = document.getElementById('commentText');
+
+        commentForm.addEventListener('submit', function(e) {
+            if (!commentText.value.trim() && !document.getElementById('ratingValue').value) {
+                e.preventDefault();
+
+                // 显示错误提示
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'text-danger mt-2';
+                errorDiv.id = 'commentError';
+                errorDiv.textContent = '请填写评论内容或选择评分';
+                errorDiv.style.animation = 'shake 0.5s';
+
+                // 添加到DOM
+                const formGroup = commentText.closest('.form-group');
+                if (!formGroup.querySelector('#commentError')) {
+                    formGroup.appendChild(errorDiv);
+
+                    // 移除错误提示
+                    setTimeout(() => {
+                        errorDiv.remove();
+                    }, 3000);
+                }
+
+                // 添加抖动动画
+                commentText.style.borderColor = '#dc3545';
+                commentText.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    commentText.style.animation = '';
+                    commentText.style.borderColor = '';
+                }, 500);
+            }
+        });
+    }
+    // 添加CSS关键帧动画
+    const styleSheet = document.createElement('style');
+    styleSheet.type = 'text/css';
+    styleSheet.innerText = `
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .star-tooltip {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        `;
+    document.head.appendChild(styleSheet);
+
+
+    // 渲染当前页评论
+    function renderComments(page) {
+        const commentList = document.getElementById('commentList');
+        commentList.innerHTML = '';
+
+        const start = (page - 1) * commentsPerPage;
+        const end = Math.min(start + commentsPerPage,allComments.length);
+        const pageComments = allComments.slice(start, end);
+        if (pageComments.length === 0) {
+            commentList.innerHTML = '<p class="text-muted">暂无评论</p>';
+            return;
+        }
+
+        pageComments.forEach(comment => {
+            const commentCard = document.createElement('div');
+            commentCard.className = 'comment-card';
+
+            commentCard.innerHTML += `
+                    <div class="d-flex justify-content-between">
+                    <img src="/uploads/1750996644328.jpg" alt="" height="60" width="60">
+                        <span class="comment-author">${comment.author}</span>
+                        <span class="comment-date">${comment.date}</span>
+                    </div>`;
+            let str="";
+            for(let i=0;i<comment.rating;i++){
+                str+="★";
+            }
+            comment.valuate=str;
+            commentCard.innerHTML+=`<span class="comment-rating">${comment.valuate}</span>`;
+            commentCard.innerHTML+=
+                `   <p class="mt-2">${comment.content}</p>
+                    <button class="btn btn-sm reply-btn">回复</button>
+                    <div class="replies mt-2" id="replies-${comment.id}">
+                        <!-- 嵌套回复 -->
+                    </div>`;
+
+            // 添加回复表单
+            const replyForm = document.createElement('form');
+            replyForm.className = 'reply-form mt-2';
+            replyForm.style.display = 'none';
+            replyForm.innerHTML = `
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" placeholder="写下你的回复...">
+                        <button class="btn btn-primary btn-sm" type="submit">发送</button>
+                    </div>
+                `;
+
+            // 点击回复按钮事件
+            const replyBtn = commentCard.querySelector('.reply-btn');
+            replyBtn.addEventListener('click', () => {
+                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+            });
+
+            // 提交回复事件
+            replyForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const replyText = replyForm.querySelector('input').value.trim();
+                if (replyText) {
+                    // 模拟添加回复（需要替换为实际API调用）
+                    const newReply = {
+                        id: Date.now(),
+                        author:username,
+                        content: replyText,
+                        date: new Date().toISOString().split('T')[0]
+                    };
+
+                    // 添加到回复列表
+                    const repliesContainer = commentCard.querySelector(`#replies-${comment.id}`);
+                    const replyElement = document.createElement('div');
+                    replyElement.className = 'ml-4 p-2 border-left';
+                    replyElement.innerHTML = `
+                            <small class="comment-author">${newReply.author}</small>
+                            <small class="comment-date ml-2">${newReply.date}</small>
+                            <p class="mb-1 mt-1">${newReply.content}</p>
+                        `;
+                    repliesContainer.appendChild(replyElement);
+
+                    // 清空输入框
+                    replyForm.querySelector('input').value = '';
+                    // 隐藏表单
+                    replyForm.style.display = 'none';
+                }
+            });
+
+            // 添加删除按钮和事件
+            if (comment.author === '当前用户') { // 仅显示删除自己的评论
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-danger ml-2';
+                deleteBtn.textContent = '删除';
+                
+                // 删除评论事件
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm('确定要删除这条评论吗？')) {
+                        // 从数组中移除评论
+                        allComments = allComments.filter(c => c.id !== comment.id);
+                        // 更新localStorage
+                        localStorage.setItem('bookComments', JSON.stringify(allComments));
+                        // 重新渲染评论
+                        renderComments(currentPage);
+                        // 重新渲染分页
+                        const totalPages = Math.ceil(allComments.length / commentsPerPage);
+                        renderPagination(totalPages);
+                    }
+                });
+                
+                // 将删除按钮添加到评论卡中
+                commentCard.querySelector('.d-flex').appendChild(deleteBtn);
+            }
+            
+            commentCard.appendChild(replyForm);
+            commentList.appendChild(commentCard);
+        });
+    }
+
+    // 渲染分页导航
+    function renderPagination(totalPages) {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        // 上一页按钮
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" data-page="${currentPage-1}">上一页</a>`;
+        pagination.appendChild(prevLi);
+
+        // 页码按钮
+        for (let i = 1; i <= totalPages; i++) {
+            const li = document.createElement('li');
+            li.innerHTML = `<a class="page-link" data-page="${i}">${i}</a>`;
+            pagination.appendChild(li);
+        }
+
+        // 下一页按钮
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" data-page="${currentPage+1}">下一页</a>`;
+        pagination.appendChild(nextLi);
+
+        // 分页点击事件
+        pagination.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click',  (e) => {
+                e.preventDefault();
+                const page = parseInt(link.getAttribute('data-page'));
+                if (page >= 1 && page <= totalPages) {
+                    currentPage = page;
+                    renderComments(currentPage);
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                }
+                else{
+                    alert('空空如也'+page);
+                }
+            });
+        });
+    }
+</script>
+<script>
+
+    function renderPagination(totalPages) {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        // 上一页按钮
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" data-page="${currentPage-1}">上一页</a>`;
+        pagination.appendChild(prevLi);
+
+        // 页码按钮
+        for (let i = 1; i <= totalPages; i++) {
+            const li = document.createElement('li');
+            li.innerHTML = `<a class="page-link" data-page="${i}">${i}</a>`;
+            pagination.appendChild(li);
+        }
+
+        // 下一页按钮
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" data-page="${currentPage+1}">下一页</a>`;
+        pagination.appendChild(nextLi);
+
+        // 分页点击事件
+        pagination.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click',  (e) => {
+                e.preventDefault();
+                const page = parseInt(link.getAttribute('data-page'));
+                if (page >= 1 && page <= totalPages) {
+                    currentPage = page;
+                    renderComments(currentPage);
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                }
+                else{
+                    alert('空空如也'+page);
+                }
+            });
+        });
+    }
+</script>
+</html>

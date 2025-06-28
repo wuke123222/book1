@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户登录</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            padding: 12px 15px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        button {
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(to right, #3498db, #2980b9);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #2980b9, #3498db);
+            transform: translateY(-2px);
+        }
+
+        .error {
+            margin-top: 15px;
+            color: #e74c3c;
+            font-size: 14px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .error.show {
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+  <h1 class="center-text custom-primary animated-title mb-4">欢迎进入图书借阅系统</h1>
+  <div class="login-container">
+    <h2>🔐 用户登录</h2>
+    <form id="loginForm">
+        <input type="text" id="username" placeholder="用户名" required />
+        <input type="password" id="password" placeholder="密码" required />
+        <div class="d-flex justify-content-between">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="rememberMe">
+                <label class="form-check-label" for="rememberMe">记住账号</label>
+            </div>
+            <a href="/register.html" class="text-decoration-none">没有账号？立即注册</a>
+        </div>
+        <button type="submit">登录</button>
+    </form>
+    <div class="error" id="errorMsg"></div>
+</div>
+</div>
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('loginForm');
+        if (!form) {
+            console.error('找不到 id="loginForm" 的表单');
+            return;
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            errorMsg.textContent = '';
+            errorMsg.classList.remove('show');  
+
+            if (!username || !password) {
+                errorMsg.textContent = '请输入用户名和密码';
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:8080/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                    credentials: 'include' // 确保携带 Cookie
+                });
+
+                if (res.ok) {
+                    localStorage.setItem('username', username);
+                    window.location.href = 'index.html';
+                } else {
+                    errorMsg.textContent = '登录失败，请检查用户名或密码';
+                    errorMsg.classList.add('show');
+                }
+            } catch (error) {
+                console.error('登录出错:', error);
+                errorMsg.textContent = '登录请求失败，请稍后再试';
+                errorMsg.classList.add('show');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图书借阅系统 - 功能介绍</title>
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding-top: 70px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .feature-section {
+            padding: 3rem 0;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 2rem;
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #0077be;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/icons/logo.png" width="30" height="30" class="d-inline-block align-top me-2">
+                图书借阅系统
+            </a>
+            <button class="btn btn-outline-primary ms-auto" onclick="window.history.back()">返回</button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <header class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">系统功能介绍</h1>
+            <p class="lead text-muted">全面了解图书借阅系统的核心功能和特色</p>
+        </header>
+
+        <div class="row feature-section g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">图书管理</h3>
+                    <p class="text-muted">支持图书信息的增删改查操作，包含ISBN、作者、出版日期等详细信息管理，提供图书分类和检索功能。</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">用户管理</h3>
+                    <p class="text-muted">完善的用户管理系统，支持用户注册、登录、个人信息维护，记录用户借阅历史和评价信息。</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">借阅服务</h3>
+                    <p class="text-muted">提供便捷的图书借阅和归还功能，实时更新库存状态，支持预约功能和借阅记录查询。</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">评价系统</h3>
+                    <p class="text-muted">用户可对借阅图书进行评分和评论，支持点赞和回复功能，形成互动交流社区。</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">数据统计</h3>
+                    <p class="text-muted">可视化展示每日借阅量统计，提供折线图和柱状图两种展示方式，支持数据动态刷新。</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">智能搜索</h3>
+                    <p class="text-muted">支持多条件组合搜索，可通过书名、作者、ISBN等多种方式快速定位所需图书。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-5 p-4 shadow-sm">
+            <h2 class="h4 fw-bold mb-3">系统特色</h2>
+            <ul class="text-muted ps-4">
+                <li class="mb-2">采用响应式设计，适配PC端和移动端访问</li>
+                <li class="mb-2">基于Spring Boot框架，保证系统稳定性和扩展性</li>
+                <li class="mb-2">使用MySQL数据库，保障数据安全和完整性</li>
+                <li class="mb-2">集成ECharts实现数据可视化，直观展示借阅趋势</li>
+                <li class="mb-2">完善的权限管理，区分普通用户和管理员功能</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 引入Bootstrap JS Bundle -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <!-- 引入Font Awesome图标库 -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
